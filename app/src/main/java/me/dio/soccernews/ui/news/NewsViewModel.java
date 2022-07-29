@@ -7,25 +7,52 @@ import androidx.lifecycle.ViewModel;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.dio.soccernews.ui.domain.News;
+import me.dio.soccernews.data.SoccerNewsApi;
+import me.dio.soccernews.domain.News;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class NewsViewModel extends ViewModel {
 
-    private final MutableLiveData<List<News>> news;
+    private final MutableLiveData<List<News>> news= new MutableLiveData<>();
+
+    private final SoccerNewsApi api;
 
     public NewsViewModel() {
-        this.news = new MutableLiveData<>();
 
-        //TODO remover mocl de noticias
-        List<News> news = new ArrayList<>();
-        news.add(new News("Corinthians bate galo no Mineirão","Com dois gols de Fábio Santos, Corinthians vira pra cima do Athletico"));
-        news.add(new News("Palmeiras segue líder","Infelizmente"));
-        news.add(new News("Mengão agora é menguinho","Time ruim que só a porra"));
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("https://lmarqueti.github.io/soccer-news-api/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
 
-        this.news.setValue(news);
+        api = retrofit.create(SoccerNewsApi.class);
+        this.findNews();
+
+    }
+
+    private void findNews() {
+        api.getNews().enqueue(new Callback<List<News>>() {
+            @Override
+            public void onResponse(Call<List<News>> call, Response<List<News>> response) {
+                if (response.isSuccessful()){
+                    news.setValue(response.body());
+                } else {
+                    //TODO INSERIR TRATAMENTO DE ERRORS
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<News>> call, Throwable t) {
+                //TODO INSERIR TRATAMENTO DE ERRORS
+            }
+        });
     }
 
     public LiveData<List<News>> getNews() {
-        return news;
+
+        return this.news;
     }
 }
